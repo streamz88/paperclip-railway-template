@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Paperclip — Railway Setup</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0f10;
+      --surface: #18181b;
+      --border:  #27272a;
+      --accent:  #6366f1;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error:   #ef4444;
+      --text:    #fafafa;
+      --muted:   #71717a;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 780px;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .card-header {
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .card-header h1 { font-size: 18px; font-weight: 600; }
+    .card-header p  { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      gap: 0;
+    }
+    .tab {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .tab:hover  { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* ── Body ── */
+    .card-body { padding: 28px 32px 36px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Section labels ── */
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+    }
+
+    /* ── Banners ── */
+    .banner {
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 13px; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+      line-height: 1.5;
+    }
+    .banner.info    { background: #1e1b4b; border: 1px solid #3730a3; color: #c7d2fe; }
+    .banner.success { background: #052e16; border: 1px solid var(--success); color: #bbf7d0; }
+    .banner.warn    { background: #1c1400; border: 1px solid var(--warning); color: #fde68a; }
+    .banner.error   { background: #1f0707; border: 1px solid var(--error);   color: #fca5a5; }
+
+    /* ── Env var table ── */
+    .var-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+    .var-row {
+      display: grid;
+      grid-template-columns: 210px 1fr 72px;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 11px 16px;
+    }
+    .var-row.ok      { border-color: #166534; }
+    .var-row.missing { border-color: var(--error); }
+    .var-key  { font-size: 12px; font-weight: 600; font-family: monospace; }
+    .var-key small { display: block; font-family: sans-serif; font-weight: 400; font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .var-hint { font-size: 12px; color: var(--muted); font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .var-badge { text-align: right; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .var-badge.ok      { color: var(--success); }
+    .var-badge.missing { color: var(--error); }
+    .var-badge.optional{ color: var(--muted); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary   { background: var(--accent); color: #fff; }
+    .btn-secondary { background: var(--border);  color: var(--text); }
+    .btn-ghost     { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-danger    { background: #450a0a; color: #fca5a5; border: 1px solid var(--error); }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+
+    /* ── Steps ── */
+    .steps { counter-reset: s; list-style: none; display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+    .steps li {
+      counter-increment: s;
+      position: relative; padding: 11px 16px 11px 44px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; font-size: 13px; color: var(--muted); line-height: 1.5;
+    }
+    .steps li::before {
+      content: counter(s);
+      position: absolute; left: 14px; top: 11px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--border); display: flex;
+      align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; color: var(--text);
+    }
+    .steps li strong { color: var(--text); }
+
+    /* ── Invite box ── */
+    .invite-box {
+      background: var(--bg);
+      border: 1px solid #166534;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+    .invite-box h3 { font-size: 13px; font-weight: 600; color: #bbf7d0; margin-bottom: 12px; }
+    .url-row { display: flex; gap: 8px; align-items: center; }
+    .url-input {
+      flex: 1; min-width: 0;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 8px 12px;
+      border-radius: 6px; font-size: 12px; font-family: monospace;
+    }
+    .invite-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+    .invite-note { font-size: 12px; color: var(--muted); margin-top: 12px; line-height: 1.6; }
+    .invite-note code { background: var(--border); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+
+    /* ── Reset section ── */
+    .reset-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px;
+      margin-top: 24px;
+    }
+    .reset-box h3 { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .reset-box p  { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 14px; height: 14px; flex-shrink: 0;
+      border: 2px solid var(--border); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    code { background: var(--border); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    .text-muted { color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <div class="card-header">
+    <div class="logo">📎</div>
+    <div>
+      <h1>Paperclip — Railway</h1>
+      <p id="header-subtitle">Loading...</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('setup')">Setup</button>
+    <button class="tab" onclick="showTab('manage')" id="tab-manage">Manage</button>
+  </div>
+
+  <div class="card-body">
+
+    <!-- ══════════════════════════════════════════════
+         TAB: SETUP
+    ══════════════════════════════════════════════ -->
+    <div class="tab-panel active" id="panel-setup">
+
+      <div class="section-label">How to deploy</div>
+      <ol class="steps">
+        <li>In Railway, open this service → click <strong>Variables</strong> → add the required vars below.</li>
+        <li>For <code>BETTER_AUTH_SECRET</code> set the value to <code>${{secret(32)}}</code> — Railway generates it automatically.</li>
+        <li>For <code>DATABASE_URL</code> use <code>${{Postgres.DATABASE_URL}}</code> to reference your Postgres service.</li>
+        <li>Click <strong>Refresh</strong> below until all required vars are green, then click <strong>Launch Paperclip</strong>.</li>
+        <li>Switch to the <strong>Manage</strong> tab — copy the bootstrap invite link and register your admin account.</li>
+        <li>Once registered, set <code>PAPERCLIP_AUTH_DISABLE_SIGN_UP=true</code> in Railway Variables to lock down signups.</li>
+      </ol>
+
+      <div class="section-label">Environment variables</div>
+      <div id="setup-banner" class="banner info">
+        <span class="spinner"></span>
+        <span>Checking environment variables...</span>
+      </div>
+      <div class="var-list" id="var-list"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="launch-btn" disabled onclick="launch()">🚀 Launch Paperclip</button>
+        <button class="btn btn-secondary" onclick="loadStatus()">🔄 Refresh</button>
+        <span class="text-muted" id="launch-note" style="display:none">Already launched — switch to Manage tab.</span>
+      </div>
+
+      <div id="launch-progress" style="display:none; margin-top:16px;" class="banner info">
+        <span class="spinner"></span>
+        <span id="launch-msg">Launching Paperclip...</span>
+      </div>
+
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         TAB: MANAGE
+    ══════════════════════════════════════════════ -->
+    <div class="tab-panel" id="panel-manage">
+
+      <!-- Invite section -->
+      <div class="section-label">Admin registration</div>
+
+      <div id="invite-waiting" class="banner info" style="display:none">
+        <span class="spinner"></span>
+        <span>Waiting for Paperclip to start and generate the bootstrap invite...</span>
+      </div>
+
+      <div id="invite-not-launched" class="banner warn" style="display:none">
+        ⚠️ Paperclip hasn't been launched yet. Go to the Setup tab and click Launch first.
+      </div>
+
+      <div id="invite-box" class="invite-box" style="display:none">
+        <h3>✅ Paperclip is running — register your admin account:</h3>
+        <div class="url-row">
+          <input class="url-input" id="invite-url" readonly placeholder="Loading..." />
+          <button class="btn btn-secondary" onclick="copyInvite(this)">📋 Copy</button>
+        </div>
+        <div class="invite-actions">
+          <a id="invite-link" href="#" target="_blank">
+            <button class="btn btn-primary">🔗 Open in new tab</button>
+          </a>
+          <button class="btn btn-ghost" id="rotate-btn" onclick="rotateInvite(this)">🔄 Rotate link</button>
+        </div>
+        <p class="invite-note">
+          After registering, go to Railway Variables → add <code>PAPERCLIP_AUTH_DISABLE_SIGN_UP=true</code> → redeploy.<br>
+          To delete user accounts or start fresh, delete the Postgres service in Railway and add a new one.
+        </p>
+      </div>
+
+      <hr class="divider" />
+
+      <!-- Status -->
+      <div class="section-label">Status</div>
+      <div id="manage-status" class="banner info">
+        <span class="spinner"></span><span>Loading...</span>
+      </div>
+
+      <!-- Reset -->
+      <div class="reset-box">
+        <h3>⚠️ Reset setup</h3>
+        <p>
+          Deletes <code>config.json</code> and the saved invite link from the volume,
+          then stops Paperclip. On next boot, the setup flow runs again.<br><br>
+          <strong>This does NOT delete your database.</strong> All users, companies, and data
+          in Postgres remain intact. To fully start over, delete the Postgres service in Railway
+          and add a new one.
+        </p>
+        <button class="btn btn-danger" onclick="resetSetup()">🗑 Reset setup</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+
+  let appReady   = false;  // config + env vars all good
+  let pcReady    = false;  // paperclip process is up
+  let inviteUrl  = null;
+  let invitePoll = null;
+
+  // ── Tabs ───────────────────────────────────────────────────────────────────
+
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.classList.toggle('active', ['setup','manage'][i] === name);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (name === 'manage') refreshManage();
+  }
+
+  // ── Status polling ─────────────────────────────────────────────────────────
+
+  async function loadStatus() {
+    try {
+      const res  = await fetch('/setup/status');
+      const data = await res.json();
+      appReady = data.ready;
+      pcReady  = data.paperclipReady;
+      renderVars(data.vars);
+      updateSetupBanner(data.vars, data.ready);
+      updateHeader(data.ready, data.paperclipReady);
+    } catch(e) {
+      document.getElementById('setup-banner').className = 'banner error';
+      document.getElementById('setup-banner').textContent = '❌ Cannot reach setup server.';
+    }
+  }
+
+  function updateHeader(ready, pcReady) {
+    const sub = document.getElementById('header-subtitle');
+    if (!ready)   sub.textContent = 'Configure environment variables to get started.';
+    else if (!pcReady) sub.textContent = 'Paperclip is starting up...';
+    else          sub.textContent = 'Paperclip is running.';
+  }
+
+  function renderVars(vars) {
+    document.getElementById('var-list').innerHTML = vars.map(v => {
+      const rowCls    = v.missing ? 'missing' : v.set ? 'ok' : '';
+      const badgeCls  = v.missing ? 'missing' : v.set ? 'ok' : 'optional';
+      const badgeTxt  = v.missing ? '✗ Required' : v.set ? '✓ Set' : '— Optional';
+      return `<div class="var-row ${rowCls}">
+        <div class="var-key">${v.key}<small>${v.label}</small></div>
+        <div class="var-hint">${v.set ? '(set)' : v.example}</div>
+        <div class="var-badge ${badgeCls}">${badgeTxt}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function updateSetupBanner(vars, ready) {
+    const btn     = document.getElementById('launch-btn');
+    const note    = document.getElementById('launch-note');
+    const banner  = document.getElementById('setup-banner');
+    const missing = vars.filter(v => v.missing);
+
+    if (appReady && pcReady) {
+      // Already launched
+      banner.className = 'banner success';
+      banner.textContent = '✅ Paperclip is running. Use the Manage tab to get your admin invite link.';
+      btn.style.display  = 'none';
+      note.style.display = 'inline';
+    } else if (missing.length === 0) {
+      banner.className = 'banner success';
+      banner.textContent = '✅ All required variables are set. Ready to launch.';
+      btn.disabled = false;
+    } else {
+      banner.className = 'banner warn';
+      banner.innerHTML = `⚠️ ${missing.length} required variable${missing.length > 1 ? 's' : ''} missing: <strong>${missing.map(v => v.key).join(', ')}</strong>`;
+      btn.disabled = true;
+    }
+  }
+
+  // ── Launch ─────────────────────────────────────────────────────────────────
+
+  async function launch() {
+    document.getElementById('launch-btn').disabled = true;
+    const prog = document.getElementById('launch-progress');
+    prog.style.display = 'flex';
+    prog.style.alignItems = 'center';
+    prog.style.gap = '10px';
+
+    try {
+      const res  = await fetch('/setup/launch', { method: 'POST' });
+      const data = await res.json();
+      if (data.already) {
+        document.getElementById('launch-msg').textContent = 'Already running — switch to Manage tab.';
+        return;
+      }
+    } catch(_) {}
+
+    document.getElementById('launch-msg').textContent = 'Paperclip is starting up...';
+
+    // Poll status until paperclip is ready, then auto-switch to manage tab
+    const interval = setInterval(async () => {
+      await loadStatus();
+      if (pcReady) {
+        clearInterval(interval);
+        prog.style.display = 'none';
+        showTab('manage');
+      }
+    }, 2500);
+  }
+
+  // ── Manage tab ─────────────────────────────────────────────────────────────
+
+  async function refreshManage() {
+    await loadStatus();
+
+    const waiting    = document.getElementById('invite-waiting');
+    const notLaunched= document.getElementById('invite-not-launched');
+    const box        = document.getElementById('invite-box');
+    const statusDiv  = document.getElementById('manage-status');
+
+    // Status banner
+    if (pcReady) {
+      statusDiv.className = 'banner success';
+      statusDiv.textContent = '✅ Paperclip is running and healthy.';
+    } else if (appReady) {
+      statusDiv.className = 'banner info';
+      statusDiv.innerHTML = '<span class="spinner"></span><span>Paperclip is starting up...</span>';
+    } else {
+      statusDiv.className = 'banner warn';
+      statusDiv.textContent = '⚠️ Paperclip has not been launched yet.';
+    }
+
+    // Invite section
+    if (!appReady) {
+      waiting.style.display     = 'none';
+      notLaunched.style.display = 'block';
+      box.style.display         = 'none';
+      return;
+    }
+
+    notLaunched.style.display = 'none';
+
+    // Try fetching existing invite
+    const inv = await fetchInvite();
+    if (inv) {
+      showInviteBox(inv);
+    } else {
+      waiting.style.display = 'flex';
+      box.style.display     = 'none';
+      startInvitePoll();
+    }
+  }
+
+  async function fetchInvite() {
+    try {
+      const res  = await fetch('/setup/invite');
+      const data = await res.json();
+      if (data.url) { inviteUrl = data.url; return data.url; }
+    } catch(_) {}
+    return null;
+  }
+
+  function startInvitePoll() {
+    if (invitePoll) return;
+    let attempts = 0;
+    invitePoll = setInterval(async () => {
+      attempts++;
+      const url = await fetchInvite();
+      if (url) {
+        clearInterval(invitePoll);
+        invitePoll = null;
+        showInviteBox(url);
+      }
+      if (attempts > 90) {
+        clearInterval(invitePoll);
+        invitePoll = null;
+        document.getElementById('invite-waiting').innerHTML =
+          '⚠️ Could not auto-retrieve invite URL. Check Railway deploy logs for a line containing <code>/invite/pcp_bootstrap_</code>';
+      }
+    }, 2500);
+  }
+
+  function showInviteBox(url) {
+    document.getElementById('invite-waiting').style.display = 'none';
+    document.getElementById('invite-box').style.display     = 'block';
+    document.getElementById('invite-url').value = url;
+    document.getElementById('invite-link').href = url;
+  }
+
+  function copyInvite(btn) {
+    navigator.clipboard.writeText(document.getElementById('invite-url').value).then(() => {
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => btn.textContent = '📋 Copy', 2000);
+    });
+  }
+
+  async function rotateInvite(btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Rotating...';
+    try {
+      const res  = await fetch('/setup/rotate-invite', { method: 'POST' });
+      const data = await res.json();
+      if (data.url) showInviteBox(data.url);
+      else alert('Rotation completed but no URL returned. Check Railway logs.');
+    } catch(e) {
+      alert('Failed to rotate invite. Check Railway logs.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '🔄 Rotate link';
+    }
+  }
+
+  // ── Reset ──────────────────────────────────────────────────────────────────
+
+  async function resetSetup() {
+    if (!confirm('Reset setup? This will stop Paperclip and delete config.json from the volume. Your database is NOT affected.')) return;
+    try {
+      await fetch('/setup/reset', { method: 'POST' });
+      inviteUrl = null;
+      appReady  = false;
+      pcReady   = false;
+      showTab('setup');
+      await loadStatus();
+    } catch(e) {
+      alert('Reset failed. Check Railway logs.');
+    }
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+
+  loadStatus();
+</script>
+</body>
+</html>
