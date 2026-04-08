@@ -127,6 +127,12 @@
     .var-badge.missing { color: var(--error); }
     .var-badge.optional{ color: var(--muted); }
 
+    /* ── API key note ── */
+    .api-key-section { margin-top: 16px; }
+    .api-key-section .section-label { margin-bottom: 10px; }
+    .api-key-section ul { margin: 6px 0 0; padding-left: 20px; font-size: 14px; line-height: 1.9; }
+    .api-key-section li strong { color: inherit; }
+
     /* ── Buttons ── */
     .btn {
       display: inline-flex; align-items: center; gap: 6px;
@@ -209,6 +215,33 @@
     code { background: var(--border); padding: 1px 5px; border-radius: 4px; font-size: 14px; font-family: monospace; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
     .text-muted { color: var(--muted); font-size: 15px; }
+
+    /* ── Help button ── */
+    .help-btn {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 13px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .help-btn:hover { color: var(--text); border-color: var(--accent); background: #1e1b4b; }
+    .help-btn .help-icon {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--muted); color: var(--bg);
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .help-btn:hover .help-icon { background: var(--accent); }
   </style>
 </head>
 <body>
@@ -220,6 +253,10 @@
       <h1>Paperclip — Railway</h1>
       <p id="header-subtitle">Loading...</p>
     </div>
+    <a class="help-btn" href="https://github.com/praveen-ks-2001/paperclip-railway-template/issues" target="_blank">
+      <span class="help-icon">i</span>
+      Having issues?
+    </a>
   </div>
 
   <div class="tabs">
@@ -329,6 +366,8 @@
     </div>
 
   </div>
+
+
 </div>
 
 <script>
@@ -384,16 +423,37 @@
   }
 
   function renderVars(vars) {
-    document.getElementById('var-list').innerHTML = vars.map(v => {
-      const rowCls    = v.missing ? 'missing' : v.set ? 'ok' : '';
-      const badgeCls  = v.missing ? 'missing' : v.set ? 'ok' : 'optional';
-      const badgeTxt  = v.missing ? '✗ Required' : v.set ? '✓ Set' : '— Optional';
-      return `<div class="var-row ${rowCls}">
+    const anthropicSet = vars.find(v => v.key === 'ANTHROPIC_API_KEY')?.set;
+    const openaiSet    = vars.find(v => v.key === 'OPENAI_API_KEY')?.set;
+    const neitherSet   = !anthropicSet && !openaiSet;
+
+    const apiKeyNote = `
+      <div class="api-key-section">
+        <div class="section-label">Agent API Keys</div>
+        <div class="banner ${neitherSet ? 'warn' : 'info'}">
+          <div>
+            ${neitherSet ? '⚠️ Neither API key is set.' : 'ℹ️ API key status:'} At least one is required for Paperclip agents to run — without it, adapter probes and agent runs will fail.
+            <ul>
+              <li><strong>Claude (Anthropic)</strong> — any paid Claude subscription + <code>ANTHROPIC_API_KEY</code></li>
+              <li><strong>Codex (OpenAI)</strong> — any paid OpenAI subscription + <code>OPENAI_API_KEY</code></li>
+            </ul>
+          </div>
+        </div>
+      </div>`;
+
+    let html = '';
+    for (const v of vars) {
+      if (v.key === 'ANTHROPIC_API_KEY') html += apiKeyNote;
+      const rowCls   = v.missing ? 'missing' : v.set ? 'ok' : '';
+      const badgeCls = v.missing ? 'missing' : v.set ? 'ok' : 'optional';
+      const badgeTxt = v.missing ? '✗ Required' : v.set ? '✓ Set' : '— Optional';
+      html += `<div class="var-row ${rowCls}">
         <div class="var-key">${v.key}<small>${v.label}</small></div>
         <div class="var-hint">${v.set ? '(set)' : v.example}</div>
         <div class="var-badge ${badgeCls}">${badgeTxt}</div>
       </div>`;
-    }).join('');
+    }
+    document.getElementById('var-list').innerHTML = html;
   }
 
   function updateSetupBanner(vars, ready) {
