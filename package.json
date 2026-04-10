@@ -13,6 +13,9 @@
     "@openai/codex": "latest",
     "hermes-paperclip-adapter": "github:NousResearch/hermes-paperclip-adapter#main"
   },
+  "overrides": {
+    "hermes-paperclip-adapter": "$hermes-paperclip-adapter"
+  },
   "engines": {
     "node": ">=20"
   }
