@@ -10,8 +10,9 @@ RUN python3 -m venv /opt/hermes \
     && /opt/hermes/bin/pip install --no-cache-dir "git+https://github.com/NousResearch/hermes-agent.git@v2026.4.3" \
     && ln -sf /opt/hermes/bin/hermes /usr/local/bin/hermes
 
-# Debug wrapper that logs args before calling hermes
-RUN printf '#!/bin/bash\necho "[hermes-wrapper] $(date) PID=$$ args: $@" >> /tmp/hermes-debug.log\necho "[hermes-wrapper] $(date) PID=$$ args: $@" >&2\nexec /opt/hermes/bin/hermes "$@"\n' > /usr/local/bin/hermes-debug && chmod +x /usr/local/bin/hermes-debug
+# Debug wrapper that logs args, fixes v0.2.0 env var bug, then calls hermes
+COPY hermes-debug.sh /usr/local/bin/hermes-debug
+RUN chmod +x /usr/local/bin/hermes-debug
 
 RUN groupadd -r paperclip && useradd -r -g paperclip -m -d /home/paperclip -s /bin/bash paperclip
 
