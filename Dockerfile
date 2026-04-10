@@ -4,10 +4,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gosu ca-certificates python3 python3-pip python3-venv git curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Hermes Agent v0.7.0 (The Resilience Release) - pinned for stability
+# Install Hermes Agent v0.8.0 (The Intelligence Release) - centralized logging, config validation
 RUN python3 -m venv /opt/hermes \
     && /opt/hermes/bin/pip install --no-cache-dir pip --upgrade \
-    && /opt/hermes/bin/pip install --no-cache-dir "git+https://github.com/NousResearch/hermes-agent.git@v2026.4.3" \
+    && /opt/hermes/bin/pip install --no-cache-dir "git+https://github.com/NousResearch/hermes-agent.git@v2026.4.8" \
     && ln -sf /opt/hermes/bin/hermes /usr/local/bin/hermes
 
 # Debug wrapper that logs args, fixes v0.2.0 env var bug, then calls hermes
