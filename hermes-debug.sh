@@ -44,7 +44,18 @@ echo "[hermes-wrapper] POST-FIX ANTHROPIC_API_KEY set: $([ -n \"$ANTHROPIC_API_K
 echo "[hermes-wrapper] POST-FIX OPENROUTER_API_KEY set: $([ -n \"$OPENROUTER_API_KEY\" ] && echo YES || echo NO/EMPTY)" >&2
 echo "[hermes-wrapper] POST-FIX ANTHROPIC_API_KEY set: $([ -n \"$ANTHROPIC_API_KEY\" ] && echo YES || echo NO/EMPTY)" >&2
 
-echo "[hermes-wrapper] Launching hermes..." >> "$LOG"
-echo "[hermes-wrapper] Launching hermes..." >&2
+# Log PAPERCLIP_* identity vars (these are auto-injected by Paperclip)
+echo "[hermes-wrapper] PAPERCLIP_API_KEY set: $([ -n "$PAPERCLIP_API_KEY" ] && echo YES || echo NO/EMPTY)" >&2
+echo "[hermes-wrapper] PAPERCLIP_AGENT_ID=$PAPERCLIP_AGENT_ID" >&2
+echo "[hermes-wrapper] PAPERCLIP_COMPANY_ID=$PAPERCLIP_COMPANY_ID" >&2
+echo "[hermes-wrapper] PAPERCLIP_RUN_ID=$PAPERCLIP_RUN_ID" >&2
+echo "[hermes-wrapper] PAPERCLIP_WAKE_REASON=$PAPERCLIP_WAKE_REASON" >&2
+echo "[hermes-wrapper] PAPERCLIP_WORKSPACE_CWD=$PAPERCLIP_WORKSPACE_CWD" >&2
+
+# Ensure YOLO mode so hermes doesn't block on approval prompts (issue #447)
+export HERMES_YOLO_MODE=1
+
+echo "[hermes-wrapper] Launching hermes (HERMES_YOLO_MODE=$HERMES_YOLO_MODE)..." >> "$LOG"
+echo "[hermes-wrapper] Launching hermes (HERMES_YOLO_MODE=$HERMES_YOLO_MODE)..." >&2
 
 exec /usr/local/bin/hermes-real "$@"

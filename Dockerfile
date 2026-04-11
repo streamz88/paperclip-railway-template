@@ -19,7 +19,7 @@ RUN groupadd -r paperclip && useradd -r -g paperclip -m -d /home/paperclip -s /b
 
 # Bake Hermes config with openrouter provider
 RUN mkdir -p /home/paperclip/.hermes/{sessions,logs,memories,skills,pairing,hooks,image_cache,audio_cache,cron} \
-    && printf 'llm:\n  provider: openrouter\n  model: anthropic/claude-opus-4\n  temperature: 0.7\n  max_tokens: 4096\nagent:\n  max_tool_iterations: 30\n  tool_progress_display: minimal\nterminal:\n  backend: local\n  working_directory: /paperclip\nsecurity:\n  approval_mode: auto\n  sudo_enabled: false\nskills:\n  auto_generate: true\n  auto_improve: true\nmemory:\n  enabled: true\n  provider: local\n' > /home/paperclip/.hermes/config.yaml \
+    && printf 'llm:\n  provider: openrouter\n  model: anthropic/claude-opus-4\n  temperature: 0.7\n  max_tokens: 4096\nagent:\n  max_tool_iterations: 30\n  tool_progress_display: minimal\nterminal:\n  backend: local\n  working_directory: /paperclip\napprovals:\n  mode: off\ncommand_allowlist:\n  - curl\n  - printenv\n  - python3\n  - node\nskills:\n  auto_generate: true\n  auto_improve: true\nmemory:\n  enabled: true\n  provider: local\n' > /home/paperclip/.hermes/config.yaml \
     && chown -R paperclip:paperclip /home/paperclip/.hermes
 
 RUN mkdir -p /paperclip && chown -R paperclip:paperclip /paperclip
