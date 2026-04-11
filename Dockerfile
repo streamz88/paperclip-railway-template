@@ -8,17 +8,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python3 -m venv /opt/hermes \
     && /opt/hermes/bin/pip install --no-cache-dir pip --upgrade \
     && /opt/hermes/bin/pip install --no-cache-dir "git+https://github.com/NousResearch/hermes-agent.git@v2026.4.8" \
-    && ln -sf /opt/hermes/bin/hermes /usr/local/bin/hermes
+    && ln -sf /opt/hermes/bin/hermes /usr/local/bin/hermes-real
 
-# Debug wrapper that logs args, fixes v0.2.0 env var bug, then calls hermes
+# Debug wrapper replaces 'hermes' symlink — v0.2.0 adapter hardcodes 'hermes' command
 COPY hermes-debug.sh /usr/local/bin/hermes-debug
-RUN chmod +x /usr/local/bin/hermes-debug
+RUN chmod +x /usr/local/bin/hermes-debug \
+    && ln -sf /usr/local/bin/hermes-debug /usr/local/bin/hermes
 
 RUN groupadd -r paperclip && useradd -r -g paperclip -m -d /home/paperclip -s /bin/bash paperclip
 
 # Bake Hermes config with openrouter provider
 RUN mkdir -p /home/paperclip/.hermes/{sessions,logs,memories,skills,pairing,hooks,image_cache,audio_cache,cron} \
-    && printf 'llm:\n  provider: openrouter\n  model: anthropic/claude-3.5-sonnet\n  temperature: 0.7\n  max_tokens: 4096\nagent:\n  max_tool_iterations: 30\n  tool_progress_display: minimal\nterminal:\n  backend: local\n  working_directory: /paperclip\nsecurity:\n  approval_mode: auto\n  sudo_enabled: false\nskills:\n  auto_generate: true\n  auto_improve: true\nmemory:\n  enabled: true\n  provider: local\n' > /home/paperclip/.hermes/config.yaml \
+    && printf 'llm:\n  provider: openrouter\n  model: anthropic/claude-opus-4\n  temperature: 0.7\n  max_tokens: 4096\nagent:\n  max_tool_iterations: 30\n  tool_progress_display: minimal\nterminal:\n  backend: local\n  working_directory: /paperclip\nsecurity:\n  approval_mode: auto\n  sudo_enabled: false\nskills:\n  auto_generate: true\n  auto_improve: true\nmemory:\n  enabled: true\n  provider: local\n' > /home/paperclip/.hermes/config.yaml \
     && chown -R paperclip:paperclip /home/paperclip/.hermes
 
 RUN mkdir -p /paperclip && chown -R paperclip:paperclip /paperclip

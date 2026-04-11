@@ -47,4 +47,4 @@ echo "[hermes-wrapper] POST-FIX ANTHROPIC_API_KEY set: $([ -n \"$ANTHROPIC_API_K
 echo "[hermes-wrapper] Launching hermes..." >> "$LOG"
 echo "[hermes-wrapper] Launching hermes..." >&2
 
-exec /opt/hermes/bin/hermes "$@"
+exec /usr/local/bin/hermes-real "$@"
